@@ -5,9 +5,7 @@
 'use strict';
 
 chrome.runtime.onInstalled.addListener(function () {
-  chrome.storage.sync.set({ color: '#3aa757' }, function (ret) {
-    console.log('The color is green');
-  });
+  console.log('Wiki Popup started');
   // chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
   //   chrome.declarativeContent.onPageChanged.addRules([{
   //     conditions: [new chrome.declarativeContent.PageStateMatcher({
@@ -31,7 +29,7 @@ chrome.browserAction.onClicked.addListener(function () {
 })
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'switchState') {
+  if (request.action === 'isEnabled') {
     chrome.storage.local.get({ enabled: false }, (dat) => {
       console.log('retour ' + dat.enabled);
       sendResponse({ enabled: dat.enabled });

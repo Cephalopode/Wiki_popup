@@ -2,9 +2,9 @@
 
 //<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-document.addEventListener('pointerup', async function (event) {
+document.addEventListener('click', async function (event) {
 
-    chrome.runtime.sendMessage({ action: 'switchState' }, (ret) => {
+    chrome.runtime.sendMessage({ action: 'isEnabled' }, (ret) => {
         if (ret.enabled) {
             displayPopup()
         }
@@ -14,7 +14,7 @@ document.addEventListener('pointerup', async function (event) {
     });
 
 })
-var displayPopup = () => {
+var displayPopup = async () => {
 
     var sel = window.getSelection().toString();
 
@@ -24,9 +24,17 @@ var displayPopup = () => {
         }
         rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
         console.log('selected:' + rect.right + "  " + rect.y);
-        //document.body.style.backgroundColor = 'blue';
-
-        let trans = 'abc'//await getTrans(sel, "wikidata");
+        let doc_lang_code = document.documentElement.lang
+        if (doc_lang_code.search('^.+[-_]') > -1) {
+            doc_lang = doc_lang_code.match('^.+[-_]')[0].slice(0, -1)
+        }
+        else if (doc_lang_code.length > 0) {
+            doc_lang = doc_lang_code
+        }
+        else {
+            doc_lang = 'en'
+        }
+        let trans = await getTrans(sel, "wikidata", doc_lang);
         var div = $('<div class="wiki-popup">')
             .append($('<p>' + trans + '</p>'))
             .css({
@@ -40,13 +48,12 @@ var displayPopup = () => {
             .appendTo(document.body);
     }
     else {
-        //document.body.style.backgroundColor = '';
         $('.wiki-popup').remove();
     }
 }
 
 
-let getTrans = async (word, method) => {
+let getTrans = async (word, method, sourceLang) => {
     var params;
     if (method === "sparkql") {
         params = {
@@ -75,7 +82,7 @@ let getTrans = async (word, method) => {
             url: "https://cors-anywhere.herokuapp.com/https://www.wikidata.org/w/api.php?",
             example: 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&languages=fr|en|es|zh&props=labels|descriptions&titles=barbell&normalize=1',
             data: {
-                format: 'json', action: 'wbgetentities', sites: 'enwiki', languages: 'fr|en|es|zh',
+                format: 'json', action: 'wbgetentities', sites: sourceLang + 'wiki', languages: 'fr|en|es|zh',
                 props: 'labels|descriptions', titles: word, normalize: '1'
             }
         }
@@ -91,7 +98,8 @@ let getTrans = async (word, method) => {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Origin': '*',
-        }
+        },
+        complete: function () { console.log('post: ' + this.url) }
     })
     console.log(result_json)
     if (method === "sparql") {
