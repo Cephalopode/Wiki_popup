@@ -1,6 +1,6 @@
 
 
-//<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+'use strict';
 
 document.addEventListener('click', async function (event) {
 
@@ -18,42 +18,48 @@ var displayPopup = async () => {
 
     var sel = window.getSelection().toString();
 
-    if (sel.length > 0) {
-        if ($('.wiki-popup')) {
-            $('.wiki-popup').remove();
-        }
-        rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
-        console.log('selected:' + rect.right + "  " + rect.y);
+    if (sel.length < 1) {
+        $('.wiki-popup').remove();
+        return
+    }
+    if ($('.wiki-popup')) {
+        $('.wiki-popup').remove();
+    }
+
+    chrome.runtime.sendMessage({ action: 'getSettings' }, async (ret) => {
+        let settings = ret.options
+        console.log('selected:' + sel + ' ' + $('html').attr('xml:lang') + JSON.stringify(settings));
         let doc_lang_code = document.documentElement.lang
+        let doc_lang = 'en'
         if (doc_lang_code.search('^.+[-_]') > -1) {
             doc_lang = doc_lang_code.match('^.+[-_]')[0].slice(0, -1)
         }
         else if (doc_lang_code.length > 0) {
             doc_lang = doc_lang_code
         }
-        else {
-            doc_lang = 'en'
+        else if (typeof $('html').attr('xml:lang') !== "undefined") {
+            doc_lang = $('html').attr('xml:lang')
         }
-        let trans = await getTrans(sel, "wikidata", doc_lang);
+        let trans = await getTrans(sel, "wikidata", doc_lang, settings.targetLang);
+        let rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
         var div = $('<div class="wiki-popup">')
             .append($('<p>' + trans + '</p>'))
             .css({
                 "left": rect.right + window.pageXOffset + 'px',
                 "top": rect.y + window.pageYOffset + 'px',
-                "background-color": 'yellow',
+                "background-color": settings.popupcolor,
                 'position': 'absolute',
                 'transform': 'translate(0%, -100%)',
-                'padding': '20px'
+                'padding': '20px',
             })
             .appendTo(document.body);
-    }
-    else {
-        $('.wiki-popup').remove();
-    }
+        $('.wiki-popup').css({ 'z-index': 999 })
+    })
+
 }
 
 
-let getTrans = async (word, method, sourceLang) => {
+let getTrans = async (word, method, sourceLang, targetLang) => {
     var params;
     if (method === "sparkql") {
         params = {
@@ -78,18 +84,19 @@ let getTrans = async (word, method, sourceLang) => {
         }
     }
     else {
+        const langList = targetLang.join('|')
         params = {
             url: "https://cors-anywhere.herokuapp.com/https://www.wikidata.org/w/api.php?",
             example: 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&languages=fr|en|es|zh&props=labels|descriptions&titles=barbell&normalize=1',
             data: {
-                format: 'json', action: 'wbgetentities', sites: sourceLang + 'wiki', languages: 'fr|en|es|zh',
+                format: 'json', action: 'wbgetentities', sites: sourceLang + 'wiki', languages: langList,
                 props: 'labels|descriptions', titles: word, normalize: '1'
             }
         }
     }
 
 
-    result_json = await $.ajax({
+    let result_json = await $.ajax({
         method: 'post',
         url: params.url,
         data: params.data,
@@ -102,16 +109,26 @@ let getTrans = async (word, method, sourceLang) => {
         complete: function () { console.log('post: ' + this.url) }
     })
     console.log(result_json)
+    let result = ''
     if (method === "sparql") {
         result = JSON.stringify(result_json.results.bindings);
     }
     else {
-        result = ''
         if (result_json === '-1') {
             return 'Entity not found...'
         }
-        for (var entity in result_json.entities) {
-            result += JSON.stringify(result_json.entities[entity].labels) + "\n";
+        for (var ent_i in result_json.entities) {
+            let entity = result_json.entities[ent_i]
+            result += entity.id + "<br/>"
+            //result += JSON.stringify(result_json.entities[entity].labels) + "\n";
+            for (var lang_i in entity.labels) {
+                let lang = entity.labels[lang_i]
+                result += lang.language + ':  ' + lang.value;
+                if (typeof entity.descriptions[lang_i] !== "undefined") {
+                    result += ', ' + entity.descriptions[lang_i].value
+                }
+                result += "<br/>"
+            }
         }
     }
     return result;

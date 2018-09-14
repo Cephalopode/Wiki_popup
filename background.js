@@ -6,6 +6,14 @@
 
 chrome.runtime.onInstalled.addListener(function () {
   console.log('Wiki Popup started');
+  chrome.storage.sync.set({
+    options: {
+      'targetLang': ['fr', 'en', 'es', 'zh'],
+      'popupcolor': "yellow",
+      'tonecolors': "yes",
+      'fontSize': "small"
+    }
+  })
   // chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
   //   chrome.declarativeContent.onPageChanged.addRules([{
   //     conditions: [new chrome.declarativeContent.PageStateMatcher({
@@ -31,8 +39,14 @@ chrome.browserAction.onClicked.addListener(function () {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'isEnabled') {
     chrome.storage.local.get({ enabled: false }, (dat) => {
-      console.log('retour ' + dat.enabled);
+      console.log('enabled: ' + dat.enabled);
       sendResponse({ enabled: dat.enabled });
+    });
+  }
+  else if (request.action === 'getSettings') {
+    chrome.storage.sync.get(null, (dat) => {
+      console.log('settings: ' + dat.options);
+      sendResponse({ options: dat.options });
     });
   }
   return true;
