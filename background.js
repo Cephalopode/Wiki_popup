@@ -9,7 +9,7 @@ chrome.runtime.onInstalled.addListener(function () {
   chrome.storage.sync.set({
     options: {
       'targetLang': ['fr', 'en', 'es', 'zh'],
-      'popupcolor': "yellow",
+      'popupcolor': "purple",
       'tonecolors': "yes",
       'fontSize': "small"
     }

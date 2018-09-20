@@ -20,6 +20,7 @@ var displayPopup = async () => {
 
     if (sel.length < 1) {
         $('.wiki-popup').remove();
+        $(document).off('keypress')
         return
     }
     if ($('.wiki-popup')) {
@@ -28,7 +29,6 @@ var displayPopup = async () => {
 
     chrome.runtime.sendMessage({ action: 'getSettings' }, async (ret) => {
         let settings = ret.options
-        console.log('selected:' + sel + ' ' + $('html').attr('xml:lang') + JSON.stringify(settings));
         let doc_lang_code = document.documentElement.lang
         let doc_lang = 'en'
         if (doc_lang_code.search('^.+[-_]') > -1) {
@@ -40,10 +40,13 @@ var displayPopup = async () => {
         else if (typeof $('html').attr('xml:lang') !== "undefined") {
             doc_lang = $('html').attr('xml:lang')
         }
-        let trans = await getTrans(sel, "wikidata", doc_lang, settings.targetLang);
+        let entity = await getTrans(sel, "wikidata", doc_lang, settings.targetLang);
+        window.entity = entity
+        let trans = objectToString(entity);
+        console.log(entity)
         let rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
-        var div = $('<div class="wiki-popup">')
-            .append($('<p>' + trans + '</p>'))
+        let div = $('<div class="wiki-popup">')
+            .append($('<p style=margin:0px>' + trans + '</p> <i>Press a number to access Wikipedia page</i>'))
             .css({
                 "left": rect.right + window.pageXOffset + 'px',
                 "top": rect.y + window.pageYOffset + 'px',
@@ -53,8 +56,20 @@ var displayPopup = async () => {
                 'padding': '20px',
             })
             .appendTo(document.body);
+
         $('.wiki-popup').css({ 'z-index': 999 })
+        $(document).on('keypress', (e) => {
+            let labels_array = Object.values(entity.labels)
+            for (let n in labels_array) {
+                console.log(e.which - 49 + ' ... ' + n)
+                if (e.which - 49 === parseInt(n)) {
+                    window.open('http://' + labels_array[n].language + '.wikipedia.org/wiki/' + labels_array[n].value)
+                    //window.open('http://www.google.com')
+                }
+            }
+        })
     })
+
 
 }
 
@@ -83,6 +98,9 @@ let getTrans = async (word, method, sourceLang, targetLang) => {
             }
         }
     }
+    else if (method === "wikipedia") {
+        example: 'https://en.wikipedia.org/w/api.php?action=query&generator=revisions&format=xml&redirects=1&titles=canadian%20elections&prop=langlinks|pageterms'
+    }
     else {
         const langList = targetLang.join('|')
         params = {
@@ -109,27 +127,31 @@ let getTrans = async (word, method, sourceLang, targetLang) => {
         complete: function () { console.log('post: ' + this.url) }
     })
     console.log(result_json)
-    let result = ''
+
     if (method === "sparql") {
         result = JSON.stringify(result_json.results.bindings);
     }
     else {
-        if (result_json === '-1') {
+        if (!result_json.success || Object.keys(result_json.entities)[0] === "-1") {
             return 'Entity not found...'
         }
-        for (var ent_i in result_json.entities) {
-            let entity = result_json.entities[ent_i]
-            result += entity.id + "<br/>"
-            //result += JSON.stringify(result_json.entities[entity].labels) + "\n";
-            for (var lang_i in entity.labels) {
-                let lang = entity.labels[lang_i]
-                result += lang.language + ':  ' + lang.value;
-                if (typeof entity.descriptions[lang_i] !== "undefined") {
-                    result += ', ' + entity.descriptions[lang_i].value
-                }
-                result += "<br/>"
-            }
-        }
+
     }
-    return result;
+    var entity = Object.values(result_json.entities)[0]
+    return entity
+}
+
+let objectToString = (entity) => {
+    let result = ''
+    var i = 1
+    for (var lang_i in entity.labels) {
+        let lang = entity.labels[lang_i]
+        result += i++ + ' ' + lang.language + ' : ' + lang.value;
+        if (typeof entity.descriptions[lang_i] !== "undefined") {
+            result += ', ' + entity.descriptions[lang_i].value
+        }
+        result += "<br/>"
+    }
+
+    return result
 }

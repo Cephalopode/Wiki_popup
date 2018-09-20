@@ -6,7 +6,6 @@
 
 let selectInList = (l, v) => {
   for (var i = 0; i < l.length; i++) {
-    console.log(l[i].value + v)
     if (l[i].value == v) {
       l[i].selected = true;
       break;
@@ -17,7 +16,6 @@ function restoreOptions() {
   var optionsPromise = chrome.storage.sync.get(null, (storage) => {
     let options = storage.options;
 
-    console.log(options.targetLang)
     let addLang = () => {
       $('.langItem').eq(-1).after($(langList))
       $('.langItem').eq(-2).appendTo('#langLists')
@@ -46,8 +44,8 @@ function restoreOptions() {
     $('#langListsLast').css({ display: 'flex', 'align-items': 'center' })
 
 
-    let addButt = $(`<img src='../images/plus.svg'/ >`).appendTo('#langListsLast').click(addLang).css({ height: '20px', width: '20px', padding: '5px' })
-    let deleteButt = $(`<img src='../images/minus.svg'/>`).appendTo('#langListsLast').click(deleteLang).css({ height: '20px', width: '20px', padding: '5px' })
+    let addButt = $(`<img src='../images/plus.svg'/ >`).appendTo('#langListsLast').click(addLang).css({ height: '20px', width: '20px', 'padding-left': '5px' })
+    let deleteButt = $(`<img src='../images/minus.svg'/>`).appendTo('#langListsLast').click(deleteLang).css({ height: '20px', width: '20px', 'padding-left': '5px' })
 
     if (options.tonecolors == 'no') {
       document.optform.tonecolors[1].selected = true;
@@ -77,7 +75,7 @@ function saveOptions() {
   });
 }
 
-let langList = `<select class='langItem' id=langItem data-placeholder="Choose a Language...">
+let langList = `<select style="margin:5px" class='langItem' id=langItem data-placeholder="Choose a Language...">
   <option value="af">Afrikanns</option>
   <option value="sq">Albanian</option>
   <option value="ar">Arabic</option>
