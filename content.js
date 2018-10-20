@@ -29,42 +29,51 @@ var displayPopup = async () => {
 
     chrome.runtime.sendMessage({ action: 'getSettings' }, async (ret) => {
         let settings = ret.options
-        let doc_lang_code = document.documentElement.lang
-        let doc_lang = 'en'
-        if (doc_lang_code.search('^.+[-_]') > -1) {
-            doc_lang = doc_lang_code.match('^.+[-_]')[0].slice(0, -1)
-        }
-        else if (doc_lang_code.length > 0) {
-            doc_lang = doc_lang_code
-        }
-        else if (typeof $('html').attr('xml:lang') !== "undefined") {
-            doc_lang = $('html').attr('xml:lang')
-        }
-        let entity = await getTrans(sel, "wikidata", doc_lang, settings.targetLang);
-        window.entity = entity
-        let trans = objectToString(entity);
-        console.log(entity)
+        let doc_lang = detectLang(sel)
         let rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
+        let clock = $(`<img class="wiki-clock" src='` + chrome.extension.getURL('images/clock.svg') + `' />`).
+            css({
+                "left": rect.right + window.pageXOffset + 'px',
+                "top": rect.y + window.pageYOffset + 'px',
+                'position': 'absolute',
+                'transform': 'translate(0%, -100%)',
+                'height': '15px',
+                'width': '15px'
+            }).appendTo(document.body)
+        let entity = await getTrans(sel, "wikidata", doc_lang, settings.targetLang);
+        $('.wiki-clock').remove()
+        let trans
+        // handle network errors
+        if (entity) {
+            window.entity = entity
+            trans = objectToString(entity);
+            console.log(entity)
+        }
+        else {
+            console.log('ERROR: Post request failed');
+            trans = 'Network Error...'
+        }
+        rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
         let div = $('<div class="wiki-popup">')
             .append($('<p style=margin:0px>' + trans + '</p> <i>Press a number to access Wikipedia page</i>'))
             .css({
                 "left": rect.right + window.pageXOffset + 'px',
                 "top": rect.y + window.pageYOffset + 'px',
                 "background-color": settings.popupcolor,
+                'color': 'black',
+                'font-size': settings.fontSize,
                 'position': 'absolute',
                 'transform': 'translate(0%, -100%)',
                 'padding': '20px',
             })
             .appendTo(document.body);
 
-        $('.wiki-popup').css({ 'z-index': 999 })
+        $('.wiki-popup').css({ 'z-index': 9999999999 })
         $(document).on('keypress', (e) => {
             let labels_array = Object.values(entity.labels)
             for (let n in labels_array) {
-                console.log(e.which - 49 + ' ... ' + n)
                 if (e.which - 49 === parseInt(n)) {
                     window.open('http://' + labels_array[n].language + '.wikipedia.org/wiki/' + labels_array[n].value)
-                    //window.open('http://www.google.com')
                 }
             }
         })
@@ -124,9 +133,10 @@ let getTrans = async (word, method, sourceLang, targetLang) => {
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Origin': '*',
         },
-        complete: function () { console.log('post: ' + this.url) }
+        complete: function () { console.log('post: ' + this.url) },
+        error: function () { console.log('ERROR: Post request failed'); return null }
     })
-    console.log(result_json)
+    if (result_json === null) return null
 
     if (method === "sparql") {
         result = JSON.stringify(result_json.results.bindings);
@@ -154,4 +164,33 @@ let objectToString = (entity) => {
     }
 
     return result
+}
+
+let detectLang = (sel) => {
+    let doc_lang_code = document.documentElement.lang
+    let doc_lang = 'en'
+    if (doc_lang_code.search('^.+[-_]') > -1) {
+        doc_lang = doc_lang_code.match('^.+[-_]')[0].slice(0, -1)
+    }
+    else if (doc_lang_code.length > 0) {
+        doc_lang = doc_lang_code
+    }
+    else if (typeof $('html').attr('xml:lang') !== "undefined") {
+        doc_lang = $('html').attr('xml:lang')
+    }
+    //If string contains CJK characters assign corresponding source language
+    const JaRe = /[\u3040-\u30ff\uff66-\uff9f]/
+    const KoRe = /[\u1100-\u11ff]/
+    const HanziRe = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/
+    if (sel.match(JaRe)) {
+        doc_lang = 'ja'
+    }
+    else if (sel.match(KoRe)) {
+        doc_lang = 'ko'
+    }
+    else if (sel.match(HanziRe)) {
+        doc_lang = 'zh'
+    }
+
+    return doc_lang
 }
