@@ -28,8 +28,11 @@ chrome.browserAction.onClicked.addListener(function () {
   chrome.storage.local.get({ enabled: false }, (dat) => {
     if (!dat.enabled) {
       chrome.storage.local.set({ enabled: true });
+      // chrome.browserAction.setBadgeBackgroundColor({'color': [255, 0, 0, 255]})
+      chrome.browserAction.setBadgeText({'text': 'On'})
     }
     else {
+      chrome.browserAction.setBadgeText({'text': '' })
       chrome.storage.local.set({ enabled: false });
     }
     console.log('status: ' + dat.enabled);
