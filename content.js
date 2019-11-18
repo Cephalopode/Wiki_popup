@@ -113,30 +113,22 @@ let getTrans = async (word, method, sourceLang, targetLang) => {
     else {
         const langList = targetLang.join('|')
         params = {
-            url: "https://cors-anywhere.herokuapp.com/https://www.wikidata.org/w/api.php?",
-            example: 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&languages=fr|en|es|zh&props=labels|descriptions&titles=barbell&normalize=1',
+            url: "https://www.wikidata.org/w/api.php?",
+            example: 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&languages=fr|en|es|zh&props=labels|descriptions&titles=barbell&normalize=1&format=json',
             data: {
-                format: 'json', action: 'wbgetentities', sites: sourceLang + 'wiki', languages: langList,
-                props: 'labels|descriptions', titles: word, normalize: '1'
+                action: 'wbgetentities', sites: sourceLang + 'wiki', languages: langList,
+                props: 'labels|descriptions', titles: word, normalize: '1', format: 'json'
             }
         }
     }
 
-
-    let result_json = await $.ajax({
-        method: 'post',
-        url: params.url,
-        data: params.data,
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Origin': '*',
-        },
-        complete: function () { console.log('post: ' + this.url) },
-        error: function () { console.log('ERROR: Post request failed'); return null }
-    })
-    if (result_json === null) return null
+    
+    let result_json 
+    try {
+        result_json = await sendMessagePromise({action: "getTrans", params: params})
+    } catch (e) {
+        return "Network problem..."
+    }
 
     if (method === "sparql") {
         result = JSON.stringify(result_json.results.bindings);
@@ -149,6 +141,20 @@ let getTrans = async (word, method, sourceLang, targetLang) => {
     }
     var entity = Object.values(result_json.entities)[0]
     return entity
+    
+}
+
+function sendMessagePromise(message) {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(message, response => {
+            console.log(response)
+            if(response.success) {
+                resolve(response);
+            } else {
+                reject(response);
+            }
+        });
+    });
 }
 
 let objectToString = (entity) => {

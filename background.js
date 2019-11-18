@@ -52,6 +52,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ options: dat.options });
     });
   }
+  else if (request.action === "getTrans") {
+     $.ajax({
+      method: 'get', 
+      url: request.params.url,
+      data: request.params.data,
+      headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Headers': "Content-Type",
+          'Access-Control-Allow-Origin': '*',
+      },
+      success: function () { console.log('success: ' + this.url) },
+      error: function () { console.log('failed: ' + this.url); }
+    }).then(sendResponse).catch(sendResponse)
+  }
   return true;
 
 })
