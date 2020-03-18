@@ -30,10 +30,10 @@ function restoreOptions() {
 
     for (const lang of options.targetLang.slice(0, -1)) {
       $(langList + '<br/>').appendTo('#langLists')
-      selectInList($('.langItem').last()[0], lang)
+      selectInList($('.langItem > select').last()[0], lang)
     }
     $(langList).appendTo('#langListsLast')
-    selectInList($('.langItem').last()[0], options.targetLang.slice(-1))
+    selectInList($('.langItem > select').last()[0], options.targetLang.slice(-1))
     for (var i = 0; i < document.optform.popupcolor.length; i++) {
       if (document.optform.popupcolor[i].value ==
         options.popupcolor) {
@@ -44,8 +44,8 @@ function restoreOptions() {
     $('#langListsLast').css({ display: 'flex', 'align-items': 'center' })
 
 
-    let addButt = $(`<img src='../images/plus.svg'/ >`).appendTo('#langListsLast').click(addLang).css({ height: '20px', width: '20px', 'padding-left': '5px' })
-    let deleteButt = $(`<img src='../images/minus.svg'/>`).appendTo('#langListsLast').click(deleteLang).css({ height: '20px', width: '20px', 'padding-left': '5px' })
+    let addButt = $(`<img src='../images/plus.svg'/ >`).appendTo('#langListsLast').click(addLang).css({ height: '30px', width: '30px', 'padding-left': '5px' })
+    let deleteButt = $(`<img src='../images/minus.svg'/>`).appendTo('#langListsLast').click(deleteLang).css({ height: '30px', width: '30px', 'padding-left': '5px' })
 
     if (options.tonecolors == 'no') {
       document.optform.tonecolors[1].selected = true;
@@ -53,10 +53,12 @@ function restoreOptions() {
       document.optform.tonecolors[0].selected = true;
     }
 
-    if (options.fontSize == 'small') {
+    if (options.fontSize == 'smaller') {
+      document.optform.fontSize[0].selected = true;
+    } else if (options.fontSize == 'small') {
       document.optform.fontSize[1].selected = true;
     } else {
-      document.optform.fontSize[0].selected = true;
+      document.optform.fontSize[2].selected = true;
     }
 
   });
@@ -75,7 +77,7 @@ function saveOptions() {
   });
 }
 
-let langList = `<select style="margin:5px" class='langItem' id=langItem data-placeholder="Choose a Language...">
+let langList = `<div class="control select langItem" id="langitem"><select name="langItem" data-placeholder="Choose a Language...">
   <option value="af">Afrikanns</option>
   <option value="sq">Albanian</option>
   <option value="ar">Arabic</option>
@@ -148,7 +150,7 @@ let langList = `<select style="margin:5px" class='langItem' id=langItem data-pla
   <option value="vi">Vietnamese</option>
   <option value="cy">Welsh</option>
   <option value="xh">Xhosa</option>
-</select>`
+</select></div>`
 
 
 

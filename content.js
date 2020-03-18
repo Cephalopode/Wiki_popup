@@ -8,9 +8,6 @@ document.addEventListener('click', async function (event) {
         if (ret.enabled) {
             displayPopup()
         }
-        else {
-            console.log('disabled');
-        }
     });
 
 })
@@ -113,7 +110,7 @@ let getTrans = async (word, method, sourceLang, targetLang) => {
     else {
         const langList = targetLang.join('|')
         params = {
-            url: "https://cors-anywhere.herokuapp.com/https://www.wikidata.org/w/api.php?",
+            url: "https://www.wikidata.org/w/api.php?",
             example: 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&languages=fr|en|es|zh&props=labels|descriptions&titles=barbell&normalize=1',
             data: {
                 format: 'json', action: 'wbgetentities', sites: sourceLang + 'wiki', languages: langList,

@@ -9,7 +9,7 @@ chrome.runtime.onInstalled.addListener(function () {
   chrome.storage.sync.set({
     options: {
       'targetLang': ['fr', 'en', 'es', 'zh'],
-      'popupcolor': "purple",
+      'popupcolor': "grey",
       'tonecolors': "yes",
       'fontSize': "small"
     }
@@ -29,10 +29,10 @@ chrome.browserAction.onClicked.addListener(function () {
     if (!dat.enabled) {
       chrome.storage.local.set({ enabled: true });
       // chrome.browserAction.setBadgeBackgroundColor({'color': [255, 0, 0, 255]})
-      chrome.browserAction.setBadgeText({'text': 'On'})
+      chrome.browserAction.setBadgeText({ 'text': 'On' })
     }
     else {
-      chrome.browserAction.setBadgeText({'text': '' })
+      chrome.browserAction.setBadgeText({ 'text': '' })
       chrome.storage.local.set({ enabled: false });
     }
     console.log('status: ' + dat.enabled);
