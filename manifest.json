@@ -10,7 +10,8 @@
   "options_page": "options.html",
   "background": {
     "scripts": [
-      "background.js"
+      "background.js",
+      "js/jquery-3.3.1.min.js"
     ],
     "persistent": false
   },
@@ -26,7 +27,8 @@
     }
   ],
   "web_accessible_resources": [
-    "images/clock.svg"
+    "images/clock.svg",
+    "css/*"
   ],
   "browser_action": {
     "browser_style": true,

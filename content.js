@@ -1,4 +1,9 @@
 
+// TODO: 
+// - disambiguation handling
+// - add wiktionary
+// - window position
+// - window appearance
 
 'use strict';
 
@@ -37,19 +42,22 @@ var displayPopup = async () => {
                 'height': '15px',
                 'width': '15px'
             }).appendTo(document.body)
-        let entity = await getTrans(sel, "wikidata", doc_lang, settings.targetLang);
-        $('.wiki-clock').remove()
+
         let trans
-        // handle network errors
-        if (entity) {
+        try {
+            let entity = await getTrans(
+                {
+                    word: sel,
+                    sourceLang: doc_lang,
+                    targetLang: settings.targetLang
+                }
+            )
             window.entity = entity
             trans = objectToString(entity);
-            console.log(entity)
+        } catch (err) {
+            trans = err
         }
-        else {
-            console.log('ERROR: Post request failed');
-            trans = 'Network Error...'
-        }
+        $('.wiki-clock').remove()
         rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
         let div = $('<div class="wiki-popup">')
             .append($('<p style=margin:0px>' + trans + '</p> <i>Press a number to access Wikipedia page</i>'))
@@ -80,72 +88,16 @@ var displayPopup = async () => {
 }
 
 
-let getTrans = async (word, method, sourceLang, targetLang) => {
-    var params;
-    if (method === "sparkql") {
-        params = {
-            url: "https://query.wikidata.org/sparql?",
-            data: {
-                format: 'json',
-                query:
-                    `SELECT ?country ?country_EN ?country_DE ?country_FR
-                    WHERE {
-                    ?country rdfs:label "${word}"@fr;
-                    SERVICE wikibase:label { bd:serviceParam wikibase:language "en".
-                            ?country rdfs:label ?country_EN.
-                    }
-                    SERVICE wikibase:label { bd:serviceParam wikibase:language "fr".
-                            ?country rdfs:label ?country_DE.
-                    } hint:Prior hint:runLast false.
-                    SERVICE wikibase:label { bd:serviceParam wikibase:language "zh".
-                            ?country rdfs:label ?country_FR.
-                    } hint:Prior hint:runLast false.
-                }`
+let getTrans = async (params) => {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: 'getTrans', params: params }, (resp) => {
+            if (resp.err) {
+                reject(resp.err)
+            } else {
+                resolve(resp.entity)
             }
-        }
-    }
-    else if (method === "wikipedia") {
-        example: 'https://en.wikipedia.org/w/api.php?action=query&generator=revisions&format=xml&redirects=1&titles=canadian%20elections&prop=langlinks|pageterms'
-    }
-    else {
-        const langList = targetLang.join('|')
-        params = {
-            url: "https://www.wikidata.org/w/api.php?",
-            example: 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&languages=fr|en|es|zh&props=labels|descriptions&titles=barbell&normalize=1',
-            data: {
-                format: 'json', action: 'wbgetentities', sites: sourceLang + 'wiki', languages: langList,
-                props: 'labels|descriptions', titles: word, normalize: '1'
-            }
-        }
-    }
-
-
-    let result_json = await $.ajax({
-        method: 'post',
-        url: params.url,
-        data: params.data,
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Origin': '*',
-        },
-        complete: function () { console.log('post: ' + this.url) },
-        error: function () { console.log('ERROR: Post request failed'); return null }
+        })
     })
-    if (result_json === null) return null
-
-    if (method === "sparql") {
-        result = JSON.stringify(result_json.results.bindings);
-    }
-    else {
-        if (!result_json.success || Object.keys(result_json.entities)[0] === "-1") {
-            return 'Entity not found...'
-        }
-
-    }
-    var entity = Object.values(result_json.entities)[0]
-    return entity
 }
 
 let objectToString = (entity) => {
