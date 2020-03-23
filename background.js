@@ -8,18 +8,22 @@ chrome.runtime.onInstalled.addListener(function () {
   console.log('Wiki Popup started');
   chrome.storage.sync.set({
     options: {
-      'targetLang': ['fr', 'en', 'es', 'zh'],
-      'popupcolor': "grey",
+      'targetLang': ['fr', 'en', 'es', 'zh', 'ru'],
+      'popupcolor': "#b6daff",
       'fontSize': "small"
     }
   })
+  chrome.storage.local.set({
+    enabled: true,
+  })
+  chrome.browserAction.setBadgeText({ 'text': 'On' })
 });
 
 chrome.browserAction.onClicked.addListener(function () {
   chrome.storage.local.get({ enabled: false }, (dat) => {
     if (!dat.enabled) {
       chrome.storage.local.set({ enabled: true });
-      // chrome.browserAction.setBadgeBackgroundColor({'color': [255, 0, 0, 255]})
+      // chrome.browserAction.setBadgeBackgroundColor({ 'color': [255, 0, 0, 255] })
       chrome.browserAction.setBadgeText({ 'text': 'On' })
     }
     else {

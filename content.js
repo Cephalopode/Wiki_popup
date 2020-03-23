@@ -28,6 +28,8 @@ var displayPopup = async () => {
     if ($('.wiki-popup')) {
         $('.wiki-popup').remove();
     }
+    let css = $(`<link rel="stylesheet" href="${chrome.extension.getURL('css/popup.css')}">`)
+    css.appendTo(window.document.getElementsByTagName('head')[0])
 
     chrome.runtime.sendMessage({ action: 'getSettings' }, async (ret) => {
         let settings = ret.options
@@ -37,10 +39,6 @@ var displayPopup = async () => {
             css({
                 "left": rect.right + window.pageXOffset + 'px',
                 "top": rect.y + window.pageYOffset + 'px',
-                'position': 'absolute',
-                'transform': 'translate(0%, -100%)',
-                'height': '15px',
-                'width': '15px'
             }).appendTo(document.body)
 
         let trans
@@ -65,11 +63,7 @@ var displayPopup = async () => {
                 "left": rect.right + window.pageXOffset + 'px',
                 "top": rect.y + window.pageYOffset + 'px',
                 "background-color": settings.popupcolor,
-                'color': 'black',
-                'font-size': settings.fontSize,
-                'position': 'absolute',
-                'transform': 'translate(0%, -100%)',
-                'padding': '20px',
+                'font-size': settings.fontSize
             })
             .appendTo(document.body);
 
@@ -131,6 +125,7 @@ let detectLang = (sel) => {
     const JaRe = /[\u3040-\u30ff\uff66-\uff9f]/
     const KoRe = /[\u1100-\u11ff]/
     const HanziRe = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/
+    const CyrillicRe = /[\u0400-\u04ff]/
     if (sel.match(JaRe)) {
         doc_lang = 'ja'
     }
@@ -139,6 +134,8 @@ let detectLang = (sel) => {
     }
     else if (sel.match(HanziRe)) {
         doc_lang = 'zh'
+    } else if (sel.match(CyrillicRe)) {
+        doc_lang = 'ru'
     }
 
     return doc_lang

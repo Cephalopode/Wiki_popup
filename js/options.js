@@ -44,14 +44,8 @@ function restoreOptions() {
     $('#langListsLast').css({ display: 'flex', 'align-items': 'center' })
 
 
-    let addButt = $(`<img src='../images/plus.svg'/ >`).appendTo('#langListsLast').click(addLang).css({ height: '30px', width: '30px', 'padding-left': '5px' })
-    let deleteButt = $(`<img src='../images/minus.svg'/>`).appendTo('#langListsLast').click(deleteLang).css({ height: '30px', width: '30px', 'padding-left': '5px' })
-
-    if (options.tonecolors == 'no') {
-      document.optform.tonecolors[1].selected = true;
-    } else {
-      document.optform.tonecolors[0].selected = true;
-    }
+    let addButt = $(`<img src='../images/plus.svg'/ >`).appendTo('#langListsLast').click(addLang).css({ cursor: 'pointer', height: '30px', width: '30px', 'padding-left': '5px' })
+    let deleteButt = $(`<img src='../images/minus.svg'/>`).appendTo('#langListsLast').click(deleteLang).css({ cursor: 'pointer', height: '30px', width: '30px', 'padding-left': '5px' })
 
     if (options.fontSize == 'smaller') {
       document.optform.fontSize[0].selected = true;
@@ -69,7 +63,6 @@ function saveOptions() {
   let options = {
     'targetLang': [...document.optform.langItem].map((a) => a.value),
     'popupcolor': document.optform.popupcolor.value,
-    'tonecolors': document.optform.tonecolors.value,
     'fontSize': document.optform.fontSize.value
   };
   let setting = chrome.storage.sync.set({
