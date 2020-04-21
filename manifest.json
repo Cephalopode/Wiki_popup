@@ -1,35 +1,20 @@
 {
   "name": "Wiki Popup",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Display translations from Wikipedia",
-  "permissions": [
-    "activeTab",
-    "declarativeContent",
-    "storage"
-  ],
+  "permissions": ["storage"],
   "options_page": "options.html",
   "background": {
-    "scripts": [
-      "background.js",
-      "js/jquery-3.3.1.min.js"
-    ],
+    "scripts": ["background.js", "js/jquery-3.3.1.min.js"],
     "persistent": false
   },
   "content_scripts": [
     {
-      "js": [
-        "js/jquery-3.3.1.min.js",
-        "content.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "js": ["js/jquery-3.3.1.min.js", "content.js"],
+      "matches": ["<all_urls>"]
     }
   ],
-  "web_accessible_resources": [
-    "images/clock.svg",
-    "css/*"
-  ],
+  "web_accessible_resources": ["images/clock.svg", "css/*"],
   "browser_action": {
     "browser_style": true,
     "default_icon": {
